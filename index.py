@@ -1,5 +1,5 @@
 def draw_board():
-    
+    board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
     print("A", end=" ")
     for i in range(3):
         if board[0][i] == 0:
