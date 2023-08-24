@@ -1,158 +1,186 @@
-def draw_board():
-    board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-    print("A", end=" ")
-    for i in range(3):
-        if board[0][i] == 0:
-            print("__", end=" ")
-        elif board[0][i] == 1:
-            print("X ", end=" ")
-        else:
-            print("O ", end=" ")
-    print()
-    print("B", end=" ")
-    for i in range(3):
-        if board[1][i] == 0:
-            print("__", end=" ")
-        elif board[1][i] == 1:
-            print("X ", end=" ")
-        else:
-            print("O ", end=" ")
-    print()
-    print("C", end=" ")
-    for i in range(3):
-        if board[2][i] == 0:
-            print("__", end=" ")
-        elif board[2][i] == 1:
-            print("X ", end=" ")
-        else:
-            print("O ", end=" ")
-    print()
+# Importar o módulo os para manipular arquivos
+import os
 
-def ask_player(symbol):
- valid = False
- while not valid:
-    move = input(f"Jogador {symbol}, escolha uma linha (A, B ou C) e uma coluna (1, 2 ou 3): ").upper()
-    if len(move) == 2 and move[0] in "ABC" and move[1] in "123":
-        row = ord(move[0]) - ord("A")
-        col = int(move[1]) - 1
-        if board[row][col] == 0:
-            board[row][col] = symbol
-            valid = True
-        else:
-            print("Essa posição já está ocupada. Tente outra.")
-    else:
-        print("Jogada inválida. Digite uma letra e um número.")
+# Definir o tabuleiro como uma lista de 9 espaços vazios
+tabuleiro = [" " for i in range(9)]
 
-def check_winner():
- # Verifica as linhas
-    for i in range(3):
-        if board[i][0] == board[i][1] == board[i][2] != 0:
-            return board[i][0]
-# Verifica as colunas
-    for i in range(3):
-        if board[0][i] == board[1][i] == board[2][i] != 0:
-            return board[0][i]
- # Verifica as diagonais
-    if board[0][0] == board[1][1] == board[2][2] != 0:
-        return board[0][0]
-    if board[0][2] == board[1][1] == board[2][0] != 0:
-        return board[0][2]
- # Verifica se há espaços vazios
-    for i in range(3):
-        for j in range(3):
-            if board[i][j] == 0:
-                return None
- # Se não houver vencedor nem espaços vazios, é empate
-    return 0
+# Definir as possíveis combinações de vitória como uma lista de tuplas
+vitorias = [(0, 1, 2), (3, 4, 5), (6, 7, 8), # linhas horizontais
+            (0, 3, 6), (1, 4, 7), (2, 5, 8), # linhas verticais
+            (0, 4, 8), (2, 4, 6)] # diagonais
 
-def play():
-    mode = input("Escolha o modo de jogo: (1) Um jogador (2) Dois jogadores: ")
-    if mode == "1":
-        symbol = int(input("Escolha o seu símbolo: (1) X (2) O: "))
-    if symbol == 1:
-        computer = 2
-    else:
-        computer = 1
-    turn = 1
+# Definir uma função para mostrar o tabuleiro na tela
+def mostrar_tabuleiro():
+    print(tabuleiro[0] + "|" + tabuleiro[1] + "|" + tabuleiro[2])
+    print("-+-+-")
+    print(tabuleiro[3] + "|" + tabuleiro[4] + "|" + tabuleiro[5])
+    print("-+-+-")
+    print(tabuleiro[6] + "|" + tabuleiro[7] + "|" + tabuleiro[8])
+
+# Definir uma função para verificar se um jogador ganhou o jogo
+def verificar_vitoria(simbolo):
+    for a, b, c in vitorias:
+        if tabuleiro[a] == tabuleiro[b] == tabuleiro[c] == simbolo:
+            return True
+    return False
+
+# Definir uma função para verificar se o tabuleiro está cheio
+def verificar_empate():
+    return " " not in tabuleiro
+
+# Definir uma função para obter a jogada do jogador humano
+def jogada_humano():
     while True:
-        draw_board()
-        if turn % 2 == 0:
-            if mode == "1" and turn == computer:
-                print("Vez do computador.")
-                row = random.randint(0, 2)
-                col = random.randint(0, 2)
-                while board[row][col] != 0:
-                    row = random.randint(0, 2)
-                    col = random.randint(0, 2)
-                    board[row][col] = computer
+        posicao = input("Escolha uma posição de 1 a 9: ")
+        if posicao.isdigit() and 1 <= int(posicao) <= 9:
+            posicao = int(posicao) - 1
+            if tabuleiro[posicao] == " ":
+                tabuleiro[posicao] = "X"
+                break
             else:
-                ask_player(2)
+                print("Essa posição já está ocupada. Tente outra.")
         else:
-            if mode == "1" and turn == symbol:
-                ask_player(symbol)
-            else:
-                ask_player(1)
-        result = check_winner()
-        if result != None:
-            draw_board()
-        if result == 0:
-            print("Empate!")
-        else:
-            print(f"O jogador {result} ganhou!")
-            break
-        turn += 1
+            print("Entrada inválida. Digite um número de 1 a 9.")
 
-def get_players():
-    player1 = input("Nome do jogador 1: ")
-    player2 = input("Nome do jogador 2: ")
-    if "\n" in player1 or ":" in player1 or "\n" in player2 or ":" in player2:
-        print("Nomes inválidos. Não podem conter '\n' ou ':'.")
-        return get_players()
+# Definir uma função para obter a jogada do jogador computador usando o algoritmo minimax
+def jogada_computador():
+    # Definir uma função auxiliar para avaliar a pontuação de um estado do jogo
+    def avaliar(simbolo):
+        if verificar_vitoria(simbolo):
+            return 1 # vitória do bot
+        elif verificar_vitoria("X"):
+            return -1 # derrota do bot
+        else:
+            return 0 # empate ou jogo incompleto
+
+    # Definir uma função auxiliar para aplicar o algoritmo minimax recursivamente
+    def minimax(profundidade, e_max):
+        # Verificar se o jogo terminou ou se a profundidade máxima foi atingida
+        if verificar_vitoria("O") or verificar_vitoria("X") or verificar_empate() or profundidade == 0:
+            return avaliar("O"), None # retornar a pontuação e nenhuma posição
+
+        # Inicializar a melhor pontuação e a melhor posição
+        if e_max: # se é o turno do bot (maximizador)
+            melhor_pontuacao = -float("inf") # infinito negativo
+            melhor_posicao = None
+        else: # se é o turno do humano (minimizador)
+            melhor_pontuacao = float("inf") # infinito positivo
+            melhor_posicao = None
+
+        # Percorrer todas as posições livres do tabuleiro
+        for i in range(9):
+            if tabuleiro[i] == " ":
+                # Simular a jogada na posição livre
+                if e_max: # se é o turno do bot
+                    tabuleiro[i] = "O"
+                else: # se é o turno do humano
+                    tabuleiro[i] = "X"
+
+                # Chamar o algoritmo minimax para o próximo nível da árvore de decisão
+                pontuacao, _ = minimax(profundidade - 1, not e_max)
+
+                # Desfazer a jogada simulada
+                tabuleiro[i] = " "
+
+                # Atualizar a melhor pontuação e a melhor posição
+                if e_max: # se é o turno do bot
+                    if pontuacao > melhor_pontuacao: # se a pontuação é maior que a melhor pontuação
+                        melhor_pontuacao = pontuacao # atualizar a melhor pontuação
+                        melhor_posicao = i # atualizar a melhor posição
+                else: # se é o turno do humano
+                    if pontuacao < melhor_pontuacao: # se a pontuação é menor que a melhor pontuação
+                        melhor_pontuacao = pontuacao # atualizar a melhor pontuação
+                        melhor_posicao = i # atualizar a melhor posição
+
+        # Retornar a melhor pontuação e a melhor posição
+        return melhor_pontuacao, melhor_posicao
+
+    # Chamar o algoritmo minimax para o estado atual do jogo com uma profundidade máxima de 9
+    _, posicao = minimax(9, True)
+
+    # Fazer a jogada na melhor posição encontrada
+    tabuleiro[posicao] = "O"
+
+# Definir uma função para salvar os resultados dos jogadores em um arquivo
+def salvar_resultados(jogador1, jogador2, pontos1, pontos2):
+    # Decidir o nome do arquivo em que salvar os resultados
+    nome_arquivo = "resultados.txt"
+
+    # Verificar se o arquivo já existe e ler os seus conteúdos
+    if os.path.exists(nome_arquivo):
+        with open(nome_arquivo, "r") as arquivo:
+            conteudo = arquivo.read()
     else:
-        try:
-            file = open("resultados.txt", "r")
-            data = file.read()
-            file.close()
-            if player1 not in data:
-                file = open("resultados.txt", "a")
-                file.write(f"{player1}:0\n")
-                file.close()
-            if player2 not in data:
-                file = open("resultados.txt", "a")
-                file.write(f"{player2}:0\n")
-                file.close()
-        except FileNotFoundError:
-            file = open("resultados.txt", "w")
-            file.write(f"{player1}:0\n")
-            file.write(f"{player2}:0\n")
-            file.close()
-            return player1, player2
+        conteudo = ""
 
-def update_scores(player1, player2, result):
-    file = open("resultados.txt", "r")
-    lines = file.readlines()
-    file.close()
-    for i in range(len(lines)):
-        name, score = lines[i].split(":")
-        if name == player1:
-            if result == 1:
-                score = int(score) + 2
-            elif result == 0:
-                score = int(score) + 1
-                lines[i] = f"{name}:{score}\n"
-            elif name == player2:
-                if result == 2:
-                    score = int(score) + 2
-            elif result == 0:
-                score = int(score) + 1
-                lines[i] = f"{name}:{score}\n"
-                file = open("resultados.txt", "w")
-                file.writelines(lines)
-                file.close()
+    # Criar um dicionário para armazenar os resultados dos jogadores
+    resultados = {}
 
+    # Percorrer as linhas do conteúdo do arquivo e atualizar o dicionário
+    for linha in conteudo.split("\n"):
+        if linha:
+            nome, pontos = linha.split(":")
+            resultados[nome] = int(pontos)
 
-get_players()
-play()
-board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-result = check_winner()
-update_scores(player1, player2, result)
+    # Atualizar os resultados dos jogadores atuais no dicionário
+    resultados[jogador1] = resultados.get(jogador1, 0) + pontos1
+    resultados[jogador2] = resultados.get(jogador2, 0) + pontos2
+
+    # Escrever os resultados atualizados no arquivo
+    with open(nome_arquivo, "w") as arquivo:
+        for nome, pontos in resultados.items():
+            arquivo.write(nome + ":" + str(pontos) + "\n")
+
+# Definir uma função para executar o jogo principal
+def jogo_da_velha():
+    # Mostrar as instruções do jogo
+    print("Bem-vindo ao jogo da velha!")
+    print("Você é o jogador X e o computador é o jogador O.")
+    print("Escolha uma posição de 1 a 9 conforme o esquema abaixo:")
+    print("1|2|3")
+    print("-+-+-")
+    print("4|5|6")
+    print("-+-+-")
+    print("7|8|9")
+    print()
+
+    # Perguntar os nomes dos dois jogadores
+    jogador1 = input("Digite o nome do jogador humano: ")
+    jogador2 = input("Digite o nome do jogador computador: ")
+
+    # Iniciar o jogo com o jogador humano
+    turno = "X"
+
+    # Repetir até que alguém ganhe ou haja um empate
+    while True:
+        # Mostrar o tabuleiro atual
+        mostrar_tabuleiro()
+        print()
+
+        # Verificar se o jogo terminou
+        if verificar_vitoria("X"):
+            print("Parabéns! Você ganhou o jogo!")
+            # Atribuir 2 pontos ao vencedor e 0 ao perdedor
+            salvar_resultados(jogador1, jogador2, 2, 0)
+            break
+        elif verificar_vitoria("O"):
+            print("Que pena! Você perdeu o jogo!")
+            # Atribuir 0 pontos ao perdedor e 2 ao vencedor
+            salvar_resultados(jogador1, jogador2, 0, 2)
+            break
+        elif verificar_empate():
+            print("O jogo terminou em empate!")
+            # Atribuir 1 ponto a ambos os jogadores
+            salvar_resultados(jogador1, jogador2, 1, 1)
+            break
+
+        # Alternar entre os jogadores
+        if turno == "X":
+            jogada_humano()
+            turno = "O"
+        else:
+            jogada_computador()
+            turno = "X"
+
+# Chamar a função principal para iniciar o jogo
+jogo_da_velha()
