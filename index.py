@@ -146,7 +146,7 @@ def jogo_da_velha():
 
     # Perguntar os nomes dos dois jogadores
     jogador1 = input("Digite o nome do jogador humano: ")
-    jogador2 = input("Digite o nome do jogador computador: ")
+    jogador2 = "PC"
 
     # Iniciar o jogo com o jogador humano
     turno = "X"
